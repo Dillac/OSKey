@@ -7,8 +7,8 @@
 //
 
 #include "func_def_oc.h"
-#include <string.h>
-#include <stdio.h>
+#import<CommonCrypto/CommonDigest.h>
+
 
 /*
  1.定义：__cplusplus是cpp中的自定义宏，那么定义了这个宏的话表示这是一段cpp的代码，也就是说，这段的的代码的含义是:如果这是一段cpp的代码，那么加入extern "C"{}处理其中的代码。
@@ -65,6 +65,54 @@ int fileToHexString(IN NSData * inData,OUT NSString * hexString){
     }
     return ret;
 }
+#pragma mark - sha1
+int sha1(IN NSData * inData,OUT NSString * output){
+    enum ErrorStateCode ret = ErrorStateCodeSuccess;
 
-
+    if (!inData) {
+        ret = ErrorStateCodeInvalidArg;
+        return ret;
+    }
+    NSMutableString * mutString;
+    @try{
+        uint8_t digest[CC_SHA1_DIGEST_LENGTH];
+        CC_SHA1(inData.bytes, (unsigned int)inData.length, digest);
+        mutString = [NSMutableString stringWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
+        for(int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
+            [mutString appendFormat:@"%02x", digest[i]];
+        }
+    }
+    @catch (NSException *exception){
+        //异常处理代码
+        ret = ErrorStateCodeHashData;
+    }
+    output = [mutString copy];
+    return ret;
+}
+int sha256(IN NSData * inData,OUT NSString * output){
+    enum ErrorStateCode ret = ErrorStateCodeSuccess;
+    //存在中文字符Datacrah的原因
+//    NSData *dataIn = [@"" dataUsingEncoding:NSUTF8StringEncoding];
+    NSString *hash ;
+    @try{
+        NSMutableData *macOut = [NSMutableData dataWithLength:CC_SHA256_DIGEST_LENGTH];
+        CC_SHA256(inData.bytes, (CC_LONG)inData.length,  macOut.mutableBytes);
+        hash = [macOut description];
+        hash = [hash stringByReplacingOccurrencesOfString:@" " withString:@""];
+        hash = [hash stringByReplacingOccurrencesOfString:@"<" withString:@""];
+        hash = [hash stringByReplacingOccurrencesOfString:@">" withString:@""];
+    }
+    @catch (NSException *exception){
+        NSLog(@"%@",exception);
+        //异常处理代码
+        ret = ErrorStateCodeHashData;
+        return ret;
+    }
+    output = [hash copy];
+    return ret;
+}
+int randomSM4SecKey(int byteLen , OUT NSData ** key){
+    
+    return 0;
+}
 
